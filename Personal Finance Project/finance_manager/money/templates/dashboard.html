@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load money_tags %}
+{% block title %}Dashboard — Money Manager{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold mb-6">Dashboard</h1>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">  {# expanded from 4 to 5 #}
+  <div class="rounded-xl p-4 bg-[var(--card)] border border-[var(--border)]">
+    <div class="text-[var(--muted)]">Current Amount Money </div>
+    <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">RM {{ live_total|floatformat:2 }}</div>
+  </div>
+  <div class="rounded-xl p-4 bg-[var(--card)] border border-[var(--border)]">
+    <div class="text-[var(--muted)]">This Month Income </div>
+    <div class="text-3xl font-bold text-purple-600 dark:text-purple-400">RM {{ income|floatformat:2 }}</div>
+  </div>
+  <div class="rounded-xl p-4 bg-[var(--card)] border border-[var(--border)]">
+    <div class="text-[var(--muted)]">Spent Money </div>
+    <div class="text-3xl font-bold text-rose-600 dark:text-rose-400">RM {{ spent|floatformat:2 }}</div>
+  </div>
+  <div class="rounded-xl p-4 bg-[var(--card)] border border-[var(--border)]">
+    <div class="text-[var(--muted)]">Live Balance All Amount</div>
+    <div class="text-3xl font-bold text-pink-600 dark:text-pink-400">RM {{ live_after_month_expense|floatformat:2 }}</div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">  {# expanded from 4 to 5 #}
+  {% for a in accounts %}
+  <div class="rounded-xl p-4 bg-[var(--card)] border border-[var(--border)]">
+    <div class="text-[var(--muted)]">Live Balance : <strong>{{ a.name }}</strong> </div>
+    <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">RM {{ a.live_balance|floatformat:2 }}</div>
+  </div>
+  {% empty %}
+  {% endfor %}
+  {% comment %} <div class="rounded-xl p-4 bg-[var(--card)] border border-[var(--border)]">
+    <div class="text-[var(--muted)]">Live Cash Money 💵</div>
+    <div class="text-3xl font-bold text-black-600 dark:text-black-400">RM {{ live_money|floatformat:2 }}</div>
+  </div>
+   {% endcomment %}
+  {% comment %} <div class="rounded-xl p-4 bg-[var(--card)] border border-[var(--border)]">
+    <div class="text-[var(--muted)]">This Month Budgets</div>
+    <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">RM {{ income|floatformat:2 }}</div>
+  </div> {% endcomment %}
+</div>
+
+<div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div class="col-span-1 md:col-span-3 w-full rounded-xl p-4 bg-[var(--card)] border border-[var(--border)] shadow-2xl">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="font-semibold mb-2">Expenses Daily (Current Month)</h2>
+    </div>
+    <div class="w-full h-72">
+      <canvas id="expdaily"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Make sure these two lines appear BEFORE the script that reads them -->
+{{ exp_daily_labels|json_script:"expdaily-labels" }}
+{{ exp_daily_values|json_script:"expdaily-values" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const labelsEl = document.getElementById('expdaily-labels');
+    const valuesEl = document.getElementById('expdaily-values');
+
+    if (!labelsEl || !valuesEl) {
+      console.error('JSON script tags not found on page.');
+      return;
+    }
+
+    const labels = JSON.parse(labelsEl.textContent || '[]');
+    const values = JSON.parse(valuesEl.textContent || '[]');
+
+    console.log('Daily labels:', labels);
+    console.log('Daily values:', values);
+
+    const ctx = document.getElementById('expdaily').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Expenses (RM)',
+          data: values,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (c) => `RM ${Number(c.raw).toFixed(2)}` } }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Day' }, grid: { display: false } },
+          y: { beginAtZero: true, title: { display: true, text: 'Amount (RM)' } }
+        }
+      }
+    });
+  });
+</script>
+
+
+<div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div class="md:col-span-2 rounded-xl p-4 bg-[var(--card)] border border-[var(--border)] shadow-2xl">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="font-semibold mb-2">Expenses (Last 6 Months)</h2>
+      <a href="/transactions/" class="font-bold text-sky-600 dark:text-sky-300">View all</a>
+    </div>
+    <canvas id="expChart"></canvas>
+  </div>
+  <div class="rounded-xl p-4 bg-[var(--card)] border border-[var(--border)]">
+  <div class="flex items-center justify-center mb-2">
+    <h2 class="font-semibold">This Month Budgets</h2>
+    {% comment %} <span class="text-[var(--muted)] text-sm">Pie</span> {% endcomment %}
+  </div>
+
+  {% if budgets %}
+    <canvas id="budgetChart" height="220"></canvas>
+    <div class="mt-2 text-sm text-[var(--muted)]">Tip: click legend to toggle Budget/Spent.</div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            var s = getComputedStyle(document.documentElement);
+            var axis = (s.getPropertyValue('--axis') || '#334155').trim();
+
+            var labels = {{ budget_labels|safe }};
+            var budget = {{ budget_values|safe }};
+            var spent  = {{ spent_values|safe }};
+
+            var el = document.getElementById('budgetChart');
+            if(!el) return;
+
+            new Chart(el, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [
+                { label: 'Budget', data: budget },
+                { label: 'Spent',  data: spent  }
+                ]
+            },
+            options: {
+                cutout: '55%',
+                plugins: {
+                legend: { labels: { color: axis } },
+                tooltip: {
+                    callbacks: {
+                    label: function(ctx){
+                        var v = ctx.raw;
+                        return ' ' + ctx.dataset.label + ': RM ' + (Number(v||0)).toFixed(2);
+                    }
+                    }
+                }
+                }
+            }
+            });
+        });
+        </script>
+    {% else %}
+        <div class="text-[var(--muted)]">No budgets set for this month.</div>
+    {% endif %}
+    </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    var base = Number('{{ live_total|floatformat:2 }}');
+    var amtEl = document.getElementById('whatIfAmount');
+    var typeEl = document.getElementById('whatIfType');
+    var outEl  = document.getElementById('whatIfResult');
+    function recalc(){
+      var v = Number(amtEl.value || 0);
+      if(isNaN(v)) v = 0;
+      var res = typeEl.value === 'expense' ? (base - v) : (base + v);
+      outEl.textContent = 'RM ' + res.toFixed(2);
+    }
+    document.getElementById('whatIfBtn').addEventListener('click', recalc);
+    amtEl.addEventListener('input', recalc);
+    typeEl.addEventListener('change', recalc);
+  });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    // Safely read CSS variables
+    var s = getComputedStyle(document.documentElement);
+    var axis = (s.getPropertyValue('--axis') || '#334155').trim();
+    var grid = (s.getPropertyValue('--grid') || 'rgba(148,163,184,.30)').trim();
+
+    var labels = {{ chart_labels|safe }};
+    var data = {{ chart_values|safe }};
+
+    var el = document.getElementById('expChart');
+    if(!el) return;
+
+    new Chart(el, {
+      type: 'line',
+      data: { labels: labels, datasets: [{ label: 'Expenses', data: data, tension: 0.35 }] },
+      options: {
+        plugins: { legend: { labels: { color: axis } } },
+        scales: {
+          x: { ticks: { color: axis }, grid: { color: grid } },
+          y: { ticks: { color: axis }, grid: { color: grid }, beginAtZero: true }
+        }
+      }
+    });
+  });
+
+function toggleTheme(){
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  location.reload();
+}
+</script>
+{% endblock %}

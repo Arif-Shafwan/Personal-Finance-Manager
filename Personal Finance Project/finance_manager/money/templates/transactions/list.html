@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load money_tags %}
+{% block title %}Transactions — Money Manager{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-semibold">Transactions</h1>
+  <a href="/transactions/new/" class="px-4 py-2 rounded bg-emerald-500 text-black font-semibold">Add</a>
+</div>
+<form method="get" class="grid md:grid-cols-3 gap-3 mb-4">
+  <input name="q" value="{{ q }}" placeholder="Search note/category" class="p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded" />
+  <select name="account" class="p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded">
+    <option value="">All accounts</option>
+    {% for a in accounts %}
+      <option value="{{ a.id }}" {% if account_id|default:'' == a.id|stringformat:'s' %}selected{% endif %}>{{ a.name }}</option>
+    {% endfor %}
+  </select>
+  <button class="px-4 py-2 rounded border border-[var(--border)]">Filter</button>
+</form>
+<div class="overflow-x-auto">
+<table class="w-full text-sm">
+  <thead class="text-[var(--muted)]">
+    <tr class="border-b border-[var(--border)]">
+      <th class="p-2 text-left">Date</th>
+      <th class="p-2 text-left">Account</th>
+      <th class="p-2 text-left">Category</th>
+      <th class="p-2 text-right">Amount (RM)</th>
+      <th class="p-2">Type</th>
+      <th class="p-2">Note</th>
+      <th class="p-2">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for t in tx %}
+    <tr class="border-b border-[var(--border)]">
+      <td class="p-2">{{ t.date }}</td>
+      <td class="p-2">{{ t.account.name }}</td>
+      <td class="p-2">{{ t.category.name }}</td>
+      <td class="p-2 text-right">{{ t.amount|floatformat:2 }}</td>
+      <td class="p-2">{{ t.type }}</td>
+      <td class="p-2">{{ t.note }}</td>
+      <td class="p-2 text-center">
+        <a href="/transactions/{{ t.id }}/edit/" class="text-sky-300">Edit</a>
+        <a href="/transactions/{{ t.id }}/delete/" class="text-rose-300 ml-2">Delete</a>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" class="p-4 text-center text-slate-400">No transactions yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

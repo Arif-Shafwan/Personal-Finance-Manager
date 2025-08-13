@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load money_tags %}
+{% block title %}Transfer — Money Manager{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold mb-4">Transfer Between Accounts</h1>
+<form method="post" class="grid md:grid-cols-2 gap-4">{% csrf_token %}
+  <div>
+    <label class="block text-sm">From</label>
+    {{ form.from_account|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+  </div>
+  <div>
+    <label class="block text-sm">To</label>
+    {{ form.to_account|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+  </div>
+  <div>
+    <label class="block text-sm">Amount</label>
+    {{ form.amount|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+  </div>
+  <div>
+    <label class="block text-sm">Date</label>
+    {{ form.date|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+  </div>
+  <div class="md:col-span-2">
+    <label class="block text-sm">Note</label>
+    {{ form.note|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+  </div>
+  <div class="md:col-span-2">
+    <button class="px-4 py-2 rounded bg-emerald-500 text-black font-semibold">Transfer</button>
+    <a href="/accounts/" class="px-4 py-2 ml-2 rounded border border-[var(--border)]">Cancel</a>
+  </div>
+</form>
+{% endblock %}

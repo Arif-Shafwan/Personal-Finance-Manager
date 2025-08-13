@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load money_tags %}
+{% block title %}Manage — Money Manager{% endblock %}
+{% block content %}
+<div class="grid md:grid-cols-2 gap-6">
+  <div class="rounded-xl p-4 bg-[var(--card)] border border-[var(--border)] shadow-2xl">
+    {% comment %} <h2 class="font-semibold mb-2">{% if type == 'budget' %}Budgets{% elif type == 'category' %}Categories{% else %}Accounts{% endif %}</h2> {% endcomment %}
+    <ul class="space-y-2">
+        {% if type == 'budget' %}
+            {% for b in budgets %}
+                <li class="p-3 rounded border border-[var(--border)] flex items-center justify-between">
+                    <div>
+                        {{ b.category.name }} — {{ b.month|date:"d-m-Y" }} — RM {{ b.amount|floatformat:2 }}
+                    </div>
+                    <div class="text-sm">
+                        <a href="/budgets/{{ b.id }}/edit/" class="text-sky-700 dark:text-sky-300">Edit</a>
+                        <a href="/budgets/{{ b.id }}/delete/" class="ml-3 text-rose-700 dark:text-rose-300">Delete</a>
+                    </div>
+                </li>
+            {% empty %}<li class="text-slate-400">None yet.</li>{% endfor %}
+        {% elif type == 'category' %}
+            {% for c in cats %}
+                <li class="p-3 rounded border border-[var(--border)] flex items-center justify-between">
+                    <div>{{ c.name }} ({{ c.type }})</div>
+                    <div class="text-sm">
+                        <a href="/categories/{{ c.id }}/edit/" class="text-sky-700 dark:text-sky-300">Edit</a>
+                        <a href="/categories/{{ c.id }}/delete/" class="ml-3 text-rose-700 dark:text-rose-300">Delete</a>
+                    </div>
+                </li>
+            {% empty %}<li class="text-[var(--muted)]">None yet.</li>{% endfor %}
+        {% else %} {# type == 'account' #}
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="font-semibold">Accounts</h2>
+                <a href="/accounts/transfer/" class="text-sky-700 dark:text-sky-300">Transfer</a>
+            </div>
+            {% for a in accounts %}
+                <li class="p-3 rounded border border-[var(--border)] flex items-center justify-between">
+                <div>
+                    <div class="font-medium">{{ a.name }}</div>
+                    <div class="text-[var(--muted)] text-sm">Opening: RM {{ a.balance|floatformat:2 }}</div>
+                </div>
+                <div class="text-right">
+                    <div class="font-semibold">Live: RM {{ a.live_balance|floatformat:2 }}</div>
+                    <div class="text-sm mt-1">
+                    <a href="/accounts/{{ a.id }}/edit/" class="text-sky-700 dark:text-sky-300">Edit</a>
+                    <a href="/accounts/{{ a.id }}/delete/" class="ml-3 text-rose-700 dark:text-rose-300">Delete</a>
+                    </div>
+                </div>
+                </li>
+            {% empty %}
+                <li class="text-[var(--muted)]">None yet.</li>
+            {% endfor %}
+        {% endif %}
+    </ul>
+  </div>
+  <div class="rounded-xl p-4 bg-[var(--card)] border border-[var(--border)] shadow-2xl">
+    <h2 class="font-semibold mb-2">Add New</h2>
+    <form method="post" class="space-y-3">{% csrf_token %}
+      {% if type == 'budget' %}
+        {{ form.category|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+        {{ form.month|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+        {{ form.amount|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+      {% elif type == 'category' %}
+        {{ form.name|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+        {{ form.type|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+      {% else %}
+        {{ form.name|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+        {{ form.balance|add_class:'w-full p-2 bg-[var(--input)] border border-[var(--border)] text-[var(--fg)] rounded' }}
+      {% endif %}
+      <button class="px-4 py-2 rounded bg-emerald-500 text-black font-semibold">Save</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
